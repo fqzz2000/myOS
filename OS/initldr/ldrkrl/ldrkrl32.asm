@@ -33,7 +33,7 @@ _32bits_mode:
 	jmp 0x2000000
 	jmp $
 
-
+; 调用BIOS中断前保存上下文
 realadr_call_entry:
 	pushad
 	push    ds
@@ -51,7 +51,7 @@ save_eip_jmp:
 	pop esi
 	mov [PM32_EIP_OFF],esi
 	mov [PM32_ESP_OFF],esp
-	jmp dword far [cpmty_mode]
+	jmp dword far [cpmty_mode] ;0x1000:0x18分别载入eip和cs
 cpmty_mode:
 	dd 0x1000
 	dw 0x18

@@ -10,8 +10,8 @@ _16_mode:
 	mov	ss, bp
 	mov	ebp, cr0
 	and	ebp, 0xfffffffe
-	mov	cr0, ebp
-	jmp	0:real_entry
+	mov	cr0, ebp ; CR0.P=0 关闭保护模式
+	jmp	0:real_entry ; 刷新CS影子寄存器跳转到实模式
 real_entry:
 	mov bp, cs
 	mov ds, bp
@@ -20,12 +20,12 @@ real_entry:
 	mov sp, 08000h
 	mov bp,func_table
 	add bp,ax
-	call [bp]
+	call [bp] ; 调用函数表中的汇编函数, ax是C中传递进来的参数
 	cli
 	call disable_nmi
 	mov	ebp, cr0
 	or	ebp, 1
-	mov	cr0, ebp
+	mov	cr0, ebp ;重新开启保护模式
 	jmp dword 0x8 :_32bits_mode
 [BITS 32]
 _32bits_mode:
