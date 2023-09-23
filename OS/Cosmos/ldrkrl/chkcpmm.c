@@ -143,8 +143,12 @@ void init_krlinitstack(machbstart_t *mbsp)
 
 void init_bstartpages(machbstart_t *mbsp)
 {
-    u64_t *p = (u64_t *)(KINITPAGE_PHYADR);
-    u64_t *pdpte = (u64_t *)(KINITPAGE_PHYADR + 0x1000);
+    // 顶级页目录
+    u64_t *p = (u64_t *)(KINITPAGE_PHYADR); // 16M内存处的顶级页目录占4Kb，有512个条目。每个条目8字节
+    // 页目录指针
+    u64_t *pdpte = (u64_t *)(KINITPAGE_PHYADR + 0x1000); // 每个元素指向一个页目录，每个页目录包含512个条目。
+
+    // 页目录
     u64_t *pde = (u64_t *)(KINITPAGE_PHYADR + 0x2000);
 
     u64_t adr = 0;
@@ -153,7 +157,7 @@ void init_bstartpages(machbstart_t *mbsp)
     {
         kerror("move_krlimg err");
     }
-
+    // 目录中有512个entry，顶级页目录，页目录指针空间清零
     for (uint_t mi = 0; mi < PGENTY_SIZE; mi++)
     {
         p[mi] = 0;
@@ -165,10 +169,11 @@ void init_bstartpages(machbstart_t *mbsp)
         for (uint_t pdeii = 0; pdeii < PGENTY_SIZE; pdeii++)
         {
             pde[pdeii] = 0 | adr | KPDE_PS | KPDE_RW | KPDE_P;
-            adr += 0x200000;
+            adr += 0x200000; // 地址+2Mb，逐个赋值。
         }
         pde = (u64_t *)((u32_t)pde + 0x1000);
     }
+    // 让0x0和0xffff800000000000映射到同样的页目录索引。这样无论使用0xffff800000000000还是0x0，都能访问到同样的真实地址。。
     p[((KRNL_VIRTUAL_ADDRESS_START) >> KPML4_SHIFT) & 0x1ff] = (u64_t)((u32_t)pdpte | KPML4_RW | KPML4_P);
     p[0] = (u64_t)((u32_t)pdpte | KPML4_RW | KPML4_P);
     mbsp->mb_pml4padr = (u64_t)(KINITPAGE_PHYADR);
@@ -300,7 +305,7 @@ void init_chkmm()
         map++;
     }
 
-    if (mmsz < BASE_MEM_SZ) //0x3F00000
+    if (mmsz < BASE_MEM_SZ) // 0x3F00000
     {
         kprint("Your computer is low on memory, the memory cannot be less than 64MB!");
         CLI_HALT();
@@ -318,7 +323,7 @@ void init_chkmm()
         CLI_HALT();
     }
     ldr_createpage_and_open();
-    //for(;;);
+    // for(;;);
     return;
 }
 
@@ -345,7 +350,7 @@ void init_bstartpagesold(machbstart_t *mbsp)
         kerror("ip_moveimg err");
     }
 
-    pt64_t *pml4p = (pt64_t *)PML4T_BADR, *pdptp = (pt64_t *)PDPTE_BADR, *pdep = (pt64_t *)PDE_BADR; 
+    pt64_t *pml4p = (pt64_t *)PML4T_BADR, *pdptp = (pt64_t *)PDPTE_BADR, *pdep = (pt64_t *)PDE_BADR;
     for (int pi = 0; pi < PG_SIZE; pi++)
     {
         pml4p[pi] = 0;
@@ -374,7 +379,7 @@ void init_bstartpagesold(machbstart_t *mbsp)
 
 void ldr_createpage_and_open()
 {
-    pt64_t *pml4p = (pt64_t *)PML4T_BADR, *pdptp = (pt64_t *)PDPTE_BADR, *pdep = (pt64_t *)PDE_BADR; 
+    pt64_t *pml4p = (pt64_t *)PML4T_BADR, *pdptp = (pt64_t *)PDPTE_BADR, *pdep = (pt64_t *)PDE_BADR;
     for (int pi = 0; pi < PG_SIZE; pi++)
     {
         pml4p[pi] = 0;
@@ -384,7 +389,7 @@ void ldr_createpage_and_open()
 
     pml4p[0] = 0 | PDPTE_BADR | PDT_S_RW | PDT_S_PNT;
     pdptp[0] = 0 | PDE_BADR | PDT_S_RW | PDT_S_PNT;
-  
+
     pml4p[256] = 0 | PDPTE_BADR | PDT_S_RW | PDT_S_PNT;
 
     pt64_t tmpba = 0, tmpbd = 0 | PDT_S_SIZE | PDT_S_RW | PDT_S_PNT;

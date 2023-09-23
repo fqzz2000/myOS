@@ -49,7 +49,7 @@ _entry:
 
 	lgdt [GDT_PTR]
 	jmp dword 0x8 :_32bits_mode 
-	; jump to 32 bits mode with 0x8 as cs register (we cannot set cs register directly))
+	; jump to 32 bits mode with 0x8 as cs register (we cannot set cs segment register directly))
 
 _32bits_mode:
 	mov ax, 0x10
